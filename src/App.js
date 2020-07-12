@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import bridge from '@vkontakte/vk-bridge';
 import View from '@vkontakte/vkui/dist/components/View/View';
 import '@vkontakte/vkui/dist/vkui.css';
-import { Panel, PanelHeader, FixedLayout, Div, Separator, PanelHeaderButton, Input, PanelHeaderSimple, FormLayout, Cell, Root, PanelHeaderBack, Avatar, Group, InfoRow, Header, Link } from '@vkontakte/vkui';
+import { Panel, PanelHeader, FixedLayout, Div, Separator, PanelHeaderButton, Input, PanelHeaderSimple, FormLayout, Cell, Root, PanelHeaderBack, Avatar, Group, InfoRow, Header, Link, Button, Tabs } from '@vkontakte/vkui';
 
 import Icon28InfoOutline from '@vkontakte/icons/dist/28/info_outline';
 import Icon28Send from '@vkontakte/icons/dist/28/send';
@@ -12,6 +12,7 @@ var user_photo_url;
 var user_msg;
 var user_url;
 let msg_history = [];
+var user_id;
 
 bridge
 	.send("VKWebAppGetUserInfo")
@@ -19,6 +20,7 @@ bridge
 		user_name = data.first_name;
 		user_photo_url = data.photo_100;
 		user_url = "https://vk.com/id" + data.id;
+		user_id = data.id;
 	});
 
 if (user_name = 'undefined') {
@@ -44,11 +46,24 @@ class App extends React.Component {
 
 	sendMSG() {
 		user_msg = this.state.value;
-		this.setState({value: ''});
-		this.setState({date: new Date()});
-		msg_history.push(<Cell multiline before={<Link href={user_url}><Avatar src={user_photo_url}></Avatar></Link>}><Div><Link href={user_url}>{user_name}</Link> в {this.state.date.getHours()}:{this.state.date.getMinutes()}<br></br>{user_msg}</Div></Cell>);
+
+		if (user_msg != "" && user_msg.split(' ').length-1 != user_msg.length) {
+			this.setState({date: new Date()});
+
+			if (document.getElementsByClassName("msg").length >= 5) {
+				msg_history.splice(0, 1);
+			}
+
+			const url = "http://a0453728.xsph.ru/postMsgContent.php?user_id=" + user_id + "&user_photo_url=" + user_photo_url  + "&user_msg=" + user_msg + "&msg_date=" + this.state.date.toLocaleTimeString();
+			const Http = new XMLHttpRequest();
+			Http.open('POST', url);
+			Http.send();
+
+			msg_history.push(<Cell className="msg" multiline before={<Link href={user_url}><Avatar src={user_photo_url}></Avatar></Link>}><Div><Link href={user_url}>{user_name}</Link> в {this.state.date.toLocaleTimeString()}<br></br>{user_msg}</Div></Cell>);
+			this.setState({value: ''});
+		}
 	}
-	
+
 	handleChange(event) {
 		this.setState({value: event.target.value});
 	}
@@ -63,12 +78,12 @@ class App extends React.Component {
 						>
 							Глобальный чат
 						</PanelHeaderSimple>
-						<Div style={{ paddingTop: 10, paddingBottom: 10, whiteSpace: 'pre-line' }}>
+						<Div style={{ whiteSpace: 'pre-line', paddingBottom: 90}}>
 							<Group>
 								{msg_history}
 							</Group>
 						</Div>
-						<FixedLayout vertical="bottom">
+						<FixedLayout vertical="bottom" style={{  color: 'gray', backgroundColor: 'white' }}>
 							<Separator wide />
 							<Cell asideContent={<Icon28Send onClick={this.sendMSG}></Icon28Send>}><FormLayout ><Input value={this.state.value} onChange={this.handleChange} type="text" placeholder="Ваше сообщение"></Input></FormLayout></Cell>
 						</FixedLayout>
@@ -95,31 +110,75 @@ class App extends React.Component {
 							</Cell>
 						</Group>
 						<Group>
-							<Header mode="secondary">Использование приложения</Header>
+							<Header mode="secondary">Главное о приложении</Header>
 							<Cell multiline>
-								<InfoRow header="Контент сообщений">
-
+								<InfoRow header="GitHub проекта">
+									<Link href="https://github.com/tageerBOY">Ссылка</Link>
 								</InfoRow>
-								<InfoRow header="Авторское право">
-
+								<br></br>
+								<InfoRow header="Пользованием приложением">
+									Используя данное приложение, вы соглашаетесь c Политикой конфиденциальности, Пользовательским соглашением и правилами пользования приложения. 
 								</InfoRow>
-								<InfoRow header="Что запрещено делать">
-
-								</InfoRow>
-								<InfoRow header="Последствия нарушений">
-
+								<br></br>
+								<InfoRow header="Лицензия">
+									MIT
 								</InfoRow>
 							</Cell>
 						</Group>
 						<Group>
 							<Header mode="secondary">Помощь в разработке</Header>
 							<Cell multiline>
-								<InfoRow header="Связь с автором">
-									Мой ВК: vk.com/peruntakskazal
+								<InfoRow header="Связаться с автором">
+									Мой Email: kitaev.tagir@gmail.com
 								</InfoRow>
 								<br></br>
 								<InfoRow header="Помочь материально">
 									Мой QIWI:
+								</InfoRow>
+							</Cell>
+						</Group>
+						<Group>
+							<Header mode="secondary">Документы</Header>
+							<Cell multiline>
+								<InfoRow header="Пользовательское соглашение">
+									<Link href="https://vk.com/dev/uterms">Типовое пользовательское соглашение</Link>
+								</InfoRow>
+								<br></br>
+								<InfoRow header="Политика конфиденциальности">
+									<Link href="https://vk.com/dev/uprivacy">Типовая политика конфиденциальности</Link>
+								</InfoRow>
+								<br></br>
+								<InfoRow header="Правила пользования">
+									<Link onClick={() => this.setState({ activeView: 'app-rules' })}>Перейти</Link>
+								</InfoRow>
+							</Cell>
+						</Group>
+					</Panel>
+				</View>
+				<View id="app-rules" activePanel="panel3">
+					<Panel id="panel3">
+						<PanelHeader left={<PanelHeaderBack onClick={() => this.setState({ activeView: 'view2' }) }></PanelHeaderBack>}>
+							Правила
+						</PanelHeader>
+						<Group>
+							<Header mode="secondary">1. Запрещается(-ются)</Header>
+							<Cell multiline>
+								<InfoRow header="1.1 Контент Сообщений">
+									1.1.1 Принижение человеческого достоинства (наказание: 1 раз — предупреждение, 2 раз — блокировка доступа к приложению)
+									<br></br>
+									1.1.2 Спам сообщений, флуд (наказание: блокировка доступа к приложению)
+									<br></br>
+									1.1.3 Сообщения, содержащие в себе ссылки на иные ресурсы, отличные от https://vk.com и официального сайта приложения (наказание: блокировка доступа к приложению)
+									<br></br>
+									1.1.4 Сообщения, содержащие в себе материал порнографического, экстремистского характера (наказание: блокировка доступа к приложению)
+									<br></br>
+									1.1.5 Сообщения, в которых автор разжигает межнациональную рознь, оскорбляет личность по расовой, этнической, сексуальной принадлежности (наказание: 1 раз — предупреждение, 2 раз — блокировка доступа к приложению)
+									<br></br>
+									1.1.6 Сообщения, в которых автор призывает иных личностей к неправомерным действиям, нарушающим Законы Российской Федерации, Правила Пользования социальной сети «ВКонтакте», Правила Пользования данного приложения (наказание: блокировка доступа к приложению)
+									<br></br>
+									1.1.7 Сообщения, в которых автор призывает иных личностей к суициду или провоцируют к иным подобным действиям (наказание: 1 раз — предупреждение, 2 раз — блокировка доступа к приложению)
+									<br></br>
+									1.1.8 Оскорбление администраторов данного приложения или администрации социальной сети «ВКонтакте» (наказание: блокировка доступа к приложению)
 								</InfoRow>
 							</Cell>
 						</Group>
